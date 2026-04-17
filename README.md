@@ -100,7 +100,3 @@ sudo .venv/bin/python sniffer.py -i eth0 --no-live --log-json captura.json
    - `nc` (netcat) para TCP/UDP
    - opcionalmente DNS/DHCP se topologia o permitir
 4. Guardar logs e usar no relatorio.
-
-## Nota importante
-
-O enunciado recomenda uso de biblioteca de captura (como `scapy`) e refere que devem validar com o docente as bibliotecas permitidas.
