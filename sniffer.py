@@ -366,6 +366,80 @@ class PacketSniffer:
         self._running = True
         self.stats = CaptureStats()
         self._conversation_events_seen: Set[Tuple[str, str, str]] = set()
+        self._rate_second: Optional[str] = None
+        self._rate_bytes = 0
+        self._tcp_syn_times: Dict[Tuple[str, str, int, int], Tuple[datetime, int]] = {}
+
+    @staticmethod
+    def _format_rate(num_bytes: int) -> str:
+        bps = num_bytes * 8
+        mbps = bps / 1_000_000
+        if mbps >= 1:
+            return f"{mbps:.2f} Mbps"
+        kbit_s = bps / 1_000
+        kb_s = num_bytes / 1024
+        return f"{kbit_s:.2f} kbit/s ({kb_s:.2f} KB/s)"
+
+    def _maybe_print_rate(self, now: datetime) -> None:
+        second_key = now.strftime("%Y-%m-%d %H:%M:%S")
+        if self._rate_second is None:
+            self._rate_second = second_key
+            return
+
+        if second_key != self._rate_second:
+            print(f"Debito Atual: {self._format_rate(self._rate_bytes)}")
+            self._rate_second = second_key
+            self._rate_bytes = 0
+
+    def _track_tcp_rtt(self, pkt, record: PacketRecord, now: datetime) -> None:
+        if not pkt.haslayer(TCP):
+            return
+
+        if record.src_ip == "-" or record.dst_ip == "-":
+            return
+
+        tcp = pkt[TCP]
+        flags = int(tcp.flags)
+        syn_set = (flags & 0x02) != 0
+        ack_set = (flags & 0x10) != 0
+
+        if syn_set and not ack_set:
+            key = (record.src_ip, record.dst_ip, int(tcp.sport), int(tcp.dport))
+            if key not in self._tcp_syn_times:
+                self._tcp_syn_times[key] = (now, int(tcp.seq))
+            return
+
+        if syn_set and ack_set:
+            reverse_key = (record.dst_ip, record.src_ip, int(tcp.dport), int(tcp.sport))
+            syn_entry = self._tcp_syn_times.pop(reverse_key, None)
+            if syn_entry is None:
+                return
+            syn_time, _syn_seq = syn_entry
+            rtt_ms = (now - syn_time).total_seconds() * 1000
+            print(
+                (
+                    f"Nova ligacao estabelecida (RTT: {rtt_ms:.1f} ms) "
+                    f"{record.dst_ip}:{int(tcp.dport)} -> {record.src_ip}:{int(tcp.sport)}"
+                )
+            )
+            return
+
+        if ack_set:
+            reverse_key = (record.dst_ip, record.src_ip, int(tcp.dport), int(tcp.sport))
+            syn_entry = self._tcp_syn_times.get(reverse_key)
+            if syn_entry is None:
+                return
+            syn_time, syn_seq = syn_entry
+            if int(tcp.ack) != syn_seq + 1:
+                return
+            self._tcp_syn_times.pop(reverse_key, None)
+            rtt_ms = (now - syn_time).total_seconds() * 1000
+            print(
+                (
+                    f"Nova ligacao estabelecida (RTT: {rtt_ms:.1f} ms) "
+                    f"{record.dst_ip}:{int(tcp.dport)} -> {record.src_ip}:{int(tcp.sport)}"
+                )
+            )
 
     def _get_protocol(self, pkt) -> str:
         if pkt.haslayer(ARP):
@@ -468,7 +542,13 @@ class PacketSniffer:
         if not self._accept(record):
             return
 
+        now = datetime.now()
+
         self.stats.update(pkt, record)
+
+        if self.live:
+            self._rate_bytes += record.size
+            self._maybe_print_rate(now)
 
         if self.live:
             if self.live_conversations:
@@ -494,6 +574,8 @@ class PacketSniffer:
                     )
                 )
 
+            self._track_tcp_rtt(pkt, record, now)
+
         self.logger.write(record)
 
     def stop(self, *_args) -> None:
@@ -508,6 +590,8 @@ class PacketSniffer:
             filter=self.bpf_filter,
             stop_filter=lambda _pkt: not self._running,
         )
+        if self.live and self._rate_second is not None:
+            print(f"Debito Atual: {self._format_rate(self._rate_bytes)}")
         self.stats.finish()
         print(self.stats.render_report())
 
