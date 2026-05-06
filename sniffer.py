@@ -119,7 +119,8 @@ class CaptureStats:
             self.dst_bytes[record.dst_ip] += record.size
 
         if record.src_ip != "-" and record.dst_ip != "-":
-            pair = tuple(sorted((record.src_ip, record.dst_ip)))
+            a, b = sorted((record.src_ip, record.dst_ip))
+            pair = (a, b)
             self.conversation_packets[pair] += 1
             self.conversation_bytes[pair] += record.size
 
