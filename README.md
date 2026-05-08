@@ -56,9 +56,7 @@ Ao terminar com `Ctrl+C`, o sniffer imprime automaticamente um relatorio final c
 ## Instalacao
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements.txt
+python3 -m pip install -r requirements.txt
 ```
 
 ## Descobrir interfaces
@@ -67,17 +65,15 @@ python -m pip install -r requirements.txt
 ip -br a
 ```
 
-Exemplos comuns:
-- CORE: `eth0` (ou similar)
-- PC: `wlan0`, `wlp2s0`, `enp3s0`, `eth0`
+Exemplos comuns de interfaces:
+- **Máquinas virtuais (CORE / VMs):** `eth0` (ou similar)
+- **PC/Portátil (Ligação Wi-Fi):** `wlp4s0`, `wlan0`, `wlan1`, `wlp2s0`
+- **PC/Portátil (Ligação por Cabo):** `enp3s0`, `eth0`
 
 ## Uso rapido
 
 ```bash
-cd /home/rafabass1/RC/Rc-Sniffer
-source .venv/bin/activate
-python -m pip install -r requirements.txt
-sudo .venv/bin/python sniffer.py -i eth0
+sudo python3 sniffer.py -i eth0
 ```
 
 ## Todas as flags disponiveis
@@ -100,13 +96,13 @@ sudo .venv/bin/python sniffer.py -i eth0
 ### Live sem logs
 
 ```bash
-sudo .venv/bin/python sniffer.py -i eth0
+sudo python3 sniffer.py -i eth0
 ```
 
 ### Live agregado por conversas bidirecionais
 
 ```bash
-sudo .venv/bin/python sniffer.py -i eth0 --live-conversations
+sudo python3 sniffer.py -i eth0 --live-conversations
 ```
 
 No modo agregado, o live output deixa de mostrar cada direcao separada e passa a mostrar eventos por par de hosts (A <-> B). Para ICMP echo, aparece como evento `PING`.
@@ -114,7 +110,7 @@ No modo agregado, o live output deixa de mostrar cada direcao separada e passa a
 ### Live + logs em simultaneo
 
 ```bash
-sudo .venv/bin/python sniffer.py -i eth0 \
+sudo python3 sniffer.py -i eth0 \
   --log-txt captura.txt \
   --log-csv captura.csv \
   --log-json captura.json
@@ -123,43 +119,43 @@ sudo .venv/bin/python sniffer.py -i eth0 \
 ### Filtro por protocolo
 
 ```bash
-sudo .venv/bin/python sniffer.py -i eth0 --protocol ICMP
+sudo python3 sniffer.py -i eth0 --protocol ICMP
 ```
 
 ### Filtro por IP
 
 ```bash
-sudo .venv/bin/python sniffer.py -i eth0 --ip 10.0.0.2
+sudo python3 sniffer.py -i eth0 --ip 10.0.0.2
 ```
 
 ### Filtro por MAC
 
 ```bash
-sudo .venv/bin/python sniffer.py -i eth0 --mac aa:bb:cc:dd:ee:ff
+sudo python3 sniffer.py -i eth0 --mac aa:bb:cc:dd:ee:ff
 ```
 
 ### Filtro BPF (exemplo)
 
 ```bash
-sudo .venv/bin/python sniffer.py -i eth0 --bpf "icmp or arp"
+sudo python3 sniffer.py -i eth0 --bpf "icmp or arp"
 ```
 
 ### Apenas logging (sem imprimir live)
 
 ```bash
-sudo .venv/bin/python sniffer.py -i eth0 --no-live --log-json captura.json
+sudo python3 sniffer.py -i eth0 --no-live --log-json captura.json
 ```
 
 ### ICMP agregado por conversa (bom para testes de ping)
 
 ```bash
-sudo .venv/bin/python sniffer.py -i eth0 --protocol ICMP --live-conversations
+sudo python3 sniffer.py -i eth0 --protocol ICMP --live-conversations
 ```
 
 ### Combinar filtros + logs + agregado
 
 ```bash
-sudo .venv/bin/python sniffer.py -i eth0 \
+sudo python3 sniffer.py -i eth0 \
   --protocol ICMP \
   --ip 10.0.0.2 \
   --live-conversations \
@@ -177,22 +173,20 @@ sudo .venv/bin/python sniffer.py -i eth0 \
 
 ## Troubleshooting
 
-### `sudo: python: command not found`
+### `sudo: python3: command not found`
 
-Usa `python3` ou, de preferencia, o Python da virtualenv:
-
+Garante que tens o Python 3 instalado no sistema:
 ```bash
-sudo .venv/bin/python sniffer.py -i eth0
+sudo apt install python3
 ```
 
 ### `ModuleNotFoundError: No module named 'scapy'`
 
-Instala dependencias na virtualenv e executa com o interpretador da virtualenv:
-
+Instala as dependências:
 ```bash
-source .venv/bin/activate
-python -m pip install -r requirements.txt
-sudo .venv/bin/python sniffer.py -i eth0
+python3 -m pip install -r requirements.txt
+# ou dependendo do teu sistema, pode ser necessário:
+sudo apt install python3-scapy
 ```
 
 ## Sugestao de demonstracao (CORE)
