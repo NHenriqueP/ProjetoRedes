@@ -55,8 +55,13 @@ Ao terminar com `Ctrl+C`, o sniffer imprime automaticamente um relatorio final c
 
 ## Instalacao
 
+Podes instalar a dependência (`scapy`) usando o `pip`:
 ```bash
-python3 -m pip install -r requirements.txt
+python3 -m pip install scapy>=2.5.0
+```
+Ou, se preferires usar o gestor de pacotes do sistema (recomendado em algumas distribuições Linux):
+```bash
+sudo apt install python3-scapy
 ```
 
 ## Descobrir interfaces
@@ -182,9 +187,9 @@ sudo apt install python3
 
 ### `ModuleNotFoundError: No module named 'scapy'`
 
-Instala as dependências:
+Instala a dependência:
 ```bash
-python3 -m pip install -r requirements.txt
+python3 -m pip install scapy>=2.5.0
 # ou dependendo do teu sistema, pode ser necessário:
 sudo apt install python3-scapy
 ```
